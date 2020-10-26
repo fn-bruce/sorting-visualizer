@@ -13,22 +13,22 @@ class Sorter extends React.Component {
       unsortedBarVals: [...Array(10)].map(
         () => Math.floor(Math.random() * 25) * 10
       ),
-      sortedBarVals: null,
+      resultBarVals: null,
     };
   }
 
   handleClick() {
-    let unsortedBarVals = this.state.unsortedBarVals;
-    unsortedBarVals = bubbleSort(unsortedBarVals);
+    let resultBarVals = this.state.unsortedBarVals.slice();
+    resultBarVals = bubbleSort(resultBarVals);
     this.setState({
-      unsortedBarVals: unsortedBarVals,
+      resultBarVals: resultBarVals,
     });
   }
 
   render() {
     let barVals = [];
-    if (this.state.sortedBarVals) {
-      barVals = this.state.sortedBarVals;
+    if (this.state.resultBarVals) {
+      barVals = this.state.resultBarVals;
     } else {
       barVals = this.state.unsortedBarVals;
     }
@@ -37,6 +37,15 @@ class Sorter extends React.Component {
     ));
     return (
       <div>
+        <button
+          onClick={() => {
+            this.setState({
+              resultBarVals: this.state.unsortedBarVals,
+            });
+          }}
+        >
+          Revert
+        </button>
         <button
           onClick={() => {
             this.handleClick();
