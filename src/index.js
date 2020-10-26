@@ -3,7 +3,12 @@ import ReactDOM from "react-dom";
 import "./index.css";
 
 function Bar(props) {
-  return <li className="bar" style={{ height: props.value + "px" }}></li>;
+  return (
+    <li style={{ float: "left" }}>
+      <div>{props.value}</div>
+      <div className="bar" style={{ height: props.value * 10 + "px" }}></div>
+    </li>
+  );
 }
 
 class Sorter extends React.Component {
@@ -11,19 +16,13 @@ class Sorter extends React.Component {
     super(props);
     this.state = {
       unsortedBarVals: [...Array(10)].map(
-        () => Math.floor(Math.random() * 25) * 10
+        () => Math.floor(Math.random() * 15) + 1
       ),
       resultBarVals: null,
     };
   }
 
-  handleClick() {
-    let resultBarVals = this.state.unsortedBarVals.slice();
-    resultBarVals = bubbleSort(resultBarVals);
-    this.setState({
-      resultBarVals: resultBarVals,
-    });
-  }
+  handleClick() {}
 
   render() {
     let barVals = [];
@@ -48,7 +47,9 @@ class Sorter extends React.Component {
         </button>
         <button
           onClick={() => {
-            this.handleClick();
+            this.setState({
+              resultBarVals: bubbleSort(this.state.unsortedBarVals.slice()),
+            });
           }}
         >
           Sort
