@@ -83,6 +83,18 @@ class Sorter extends React.Component {
         <button
           onClick={() => {
             this.setState({
+              unsortedBarVals: [...Array(10)].map(
+                () => Math.floor(Math.random() * 15) + 1
+              ),
+              resultBarVals: null,
+            });
+          }}
+        >
+          Random
+        </button>
+        <button
+          onClick={() => {
+            this.setState({
               resultBarVals: this.state.unsortedBarVals,
             });
           }}
