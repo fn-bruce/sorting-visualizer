@@ -15,15 +15,59 @@ class Sorter extends React.Component {
   constructor(props) {
     super(props);
     this.state = {
+      sortingSteps: [],
       unsortedBarVals: [...Array(10)].map(
         () => Math.floor(Math.random() * 15) + 1
       ),
       resultBarVals: null,
+      currStep: 0,
+      maxStep: 0,
     };
   }
 
-  handleClick() {}
+  componentDidMount() {
+    if (this.state.sortingSteps !== []) {
+      setInterval(() => this.nextStep(), 250);
+    }
+  }
 
+  nextStep() {
+    if (this.state.currStep < this.state.maxStep) {
+      this.setState({
+        currStep: this.state.currStep + 1,
+        resultBarVals: this.state.sortingSteps[this.state.currStep + 1],
+      });
+    }
+  }
+
+  handleClick() {
+    let unsortedBarVals = this.state.unsortedBarVals.slice();
+    let sortingSteps = this.state.sortingSteps.slice(
+      0,
+      this.state.sortingSteps.length - 1
+    );
+    let maxStep = this.state.maxStep;
+
+    sortingSteps.push(unsortedBarVals.slice());
+
+    for (let i = 0; i < unsortedBarVals.length - 1; i++) {
+      for (let j = i; j < unsortedBarVals.length - 1 - i; j++) {
+        if (unsortedBarVals[j] > unsortedBarVals[j + 1]) {
+          let temp = unsortedBarVals[j];
+          unsortedBarVals[j] = unsortedBarVals[j + 1];
+          unsortedBarVals[j + 1] = temp;
+          sortingSteps.push(unsortedBarVals.slice());
+          maxStep++;
+          i = -1;
+        }
+      }
+    }
+
+    this.setState({
+      sortingSteps: sortingSteps,
+      maxStep: maxStep,
+    });
+  }
   render() {
     let barVals = [];
     if (this.state.resultBarVals) {
@@ -47,9 +91,7 @@ class Sorter extends React.Component {
         </button>
         <button
           onClick={() => {
-            this.setState({
-              resultBarVals: bubbleSort(this.state.unsortedBarVals.slice()),
-            });
+            this.handleClick();
           }}
         >
           Sort
@@ -61,17 +103,3 @@ class Sorter extends React.Component {
 }
 
 ReactDOM.render(<Sorter />, document.getElementById("root"));
-
-function bubbleSort(numList) {
-  for (let i = 0; i < numList.length - 1; i++) {
-    for (let j = i; j < numList.length - 1 - i; j++) {
-      if (numList[j] > numList[j + 1]) {
-        let temp = numList[j];
-        numList[j] = numList[j + 1];
-        numList[j + 1] = temp;
-        i = -1;
-      }
-    }
-  }
-  return numList;
-}
