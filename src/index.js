@@ -4,6 +4,11 @@ import "./index.css";
 
 function Bar(props) {
   if (props.highlightBar === true) {
+    let backgroundColor = "#f54266";
+    if (props.isSwap) {
+      backgroundColor = "#42f575";
+    }
+
     return (
       <li style={{ float: "left" }}>
         <div>{props.value}</div>
@@ -11,7 +16,7 @@ function Bar(props) {
           className="bar"
           style={{
             height: props.value * 10 + "px",
-            backgroundColor: "#f54266",
+            backgroundColor: backgroundColor,
           }}
         ></div>
       </li>
@@ -44,12 +49,13 @@ class Sorter extends React.Component {
       sortingStepsEmpty: true,
       currFirstPosition: 0,
       currSecondPosition: 0,
+      isSwap: false,
     };
   }
 
   componentDidMount() {
     if (this.sortingStepsEmpty !== []) {
-      setInterval(() => this.nextStep(), 250);
+      setInterval(() => this.nextStep(), 150);
     }
   }
 
@@ -62,6 +68,7 @@ class Sorter extends React.Component {
           .firstPosition,
         secondPosition: this.state.sortingSteps[this.state.currStep + 1]
           .secondPosition,
+        isSwap: this.state.sortingSteps[this.state.currStep + 1].isSwap,
       });
     }
   }
@@ -73,27 +80,45 @@ class Sorter extends React.Component {
       this.state.sortingSteps.length - 1
     );
     let maxStep = this.state.maxStep;
+    let isSwap = false;
 
     sortingSteps.push({
       bars: unsortedBarVals.slice(),
       firstPosition: 0,
       secondPosition: 1,
+      isSwap: isSwap,
     });
 
     for (let i = 0; i < unsortedBarVals.length - 1; i++) {
-      for (let j = i; j < unsortedBarVals.length - 1 - i; j++) {
+      for (let j = 0; j < unsortedBarVals.length - 1 - i; j++) {
+        if (j === unsortedBarVals.length - 1 - i) {
+          break;
+        }
+
         if (unsortedBarVals[j] > unsortedBarVals[j + 1]) {
+          maxStep++;
+          sortingSteps.push({
+            bars: unsortedBarVals.slice(),
+            firstPosition: j,
+            secondPosition: j + 1,
+            isSwap: isSwap,
+          });
+
           let temp = unsortedBarVals[j];
           unsortedBarVals[j] = unsortedBarVals[j + 1];
           unsortedBarVals[j + 1] = temp;
-          i = -1;
+          isSwap = true;
         }
+
         maxStep++;
         sortingSteps.push({
           bars: unsortedBarVals.slice(),
           firstPosition: j,
           secondPosition: j + 1,
+          isSwap: isSwap,
         });
+
+        isSwap = false;
       }
     }
 
@@ -108,6 +133,7 @@ class Sorter extends React.Component {
     const firstPosition = this.state.firstPosition;
     const secondPosition = this.state.secondPosition;
     let highlightBar = false;
+    let isSwap = this.state.isSwap;
     if (this.state.resultBarVals) {
       barVals = this.state.resultBarVals;
     } else {
@@ -121,7 +147,12 @@ class Sorter extends React.Component {
       }
 
       return (
-        <Bar key={"bar" + index} value={value} highlightBar={highlightBar} />
+        <Bar
+          key={"bar" + index}
+          value={value}
+          highlightBar={highlightBar}
+          isSwap={isSwap}
+        />
       );
     });
     return (
@@ -133,6 +164,12 @@ class Sorter extends React.Component {
                 () => Math.floor(Math.random() * 15) + 1
               ),
               resultBarVals: null,
+              currStep: 0,
+              maxStep: 0,
+              sortingStepsEmpty: true,
+              currFirstPosition: 0,
+              currSecondPosition: 0,
+              isSwap: false,
             });
           }}
         >
