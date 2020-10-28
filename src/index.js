@@ -5,12 +5,12 @@ import "./index.css";
 function Bar(props) {
   let style = {
     height: props.value * 10 + "px",
-    backgroundColor: "#3492eb",
+    backgroundColor: "#3492eb", // Blue
   };
   if (props.highlightBar === true) {
-    style.backgroundColor = "#f54266";
+    style.backgroundColor = "#f54266"; // Red
     if (props.isSwap) {
-      style.backgroundColor = "#42f575";
+      style.backgroundColor = "#42f575"; // Green
     }
   }
 
@@ -28,19 +28,15 @@ class Sorter extends React.Component {
     this.state = {
       sortingSteps: [
         {
-          bars: [],
-          stepNum: 0,
-          firstPosition: 0,
-          secondPosition: 0,
+          bars: getRandomNums(),
+          pos1: 0,
+          pos2: 1,
+          currStep: 0,
         },
       ],
-      unsortedBarVals: getRandomNums(),
       resultBarVals: null,
-      currStep: 0,
+      stepIndex: 0,
       maxStep: 0,
-      sortingStepsEmpty: true,
-      currFirstPosition: 0,
-      currSecondPosition: 0,
       isSwap: false,
     };
   }
@@ -48,92 +44,90 @@ class Sorter extends React.Component {
   componentDidMount() {
     const time = 150;
     setInterval(() => {
-      if (this.state.currStep < this.state.maxStep) {
+      if (this.state.stepIndex < this.state.maxStep) {
         this.nextStep();
       }
     }, time);
   }
 
   nextStep() {
-    const currStep = this.state.currStep + 1;
-    const currBars = this.state.sortingSteps[currStep];
+    const stepIndex = this.state.stepIndex + 1;
+    const currBars = this.state.sortingSteps[stepIndex];
     this.setState({
-      currStep: currStep,
+      stepIndex: stepIndex,
       resultBarVals: currBars.bars,
-      firstPosition: currBars.firstPosition,
-      secondPosition: currBars.secondPosition,
+      pos1: currBars.pos1,
+      pos2: currBars.pos2,
       isSwap: currBars.isSwap,
     });
   }
 
-  handleClick() {
-    let unsortedBarVals = this.state.unsortedBarVals.slice();
+  bubbleSort(barVals) {
     let sortingSteps = [];
-    let maxStep = 0;
     let isSwap = false;
-
-    sortingSteps.push({
-      bars: unsortedBarVals.slice(),
-      firstPosition: 0,
-      secondPosition: 1,
-      isSwap: isSwap,
-    });
-
-    for (let i = 0; i < unsortedBarVals.length - 1; i++) {
-      for (let j = 0; j < unsortedBarVals.length - 1 - i; j++) {
-        if (j === unsortedBarVals.length - 1 - i) {
+    let currStep = -1;
+    for (let i = 0; i < barVals.length - 1; i++) {
+      for (let j = 0; j < barVals.length - 1 - i; j++) {
+        if (j === barVals.length - 1 - i) {
           break;
         }
 
-        if (unsortedBarVals[j] > unsortedBarVals[j + 1]) {
-          maxStep++;
+        if (barVals[j] > barVals[j + 1]) {
+          currStep++;
           sortingSteps.push({
-            bars: unsortedBarVals.slice(),
-            firstPosition: j,
-            secondPosition: j + 1,
+            bars: barVals.slice(),
+            pos1: j,
+            pos2: j + 1,
             isSwap: isSwap,
+            currStep: currStep,
           });
 
-          let temp = unsortedBarVals[j];
-          unsortedBarVals[j] = unsortedBarVals[j + 1];
-          unsortedBarVals[j + 1] = temp;
+          let temp = barVals[j];
+          barVals[j] = barVals[j + 1];
+          barVals[j + 1] = temp;
           isSwap = true;
         }
 
-        maxStep++;
+        currStep++;
         sortingSteps.push({
-          bars: unsortedBarVals.slice(),
-          firstPosition: j,
-          secondPosition: j + 1,
+          bars: barVals.slice(),
+          pos1: j,
+          pos2: j + 1,
           isSwap: isSwap,
+          currStep: currStep,
         });
 
         isSwap = false;
       }
     }
+    return sortingSteps;
+  }
+
+  handleClick() {
+    let isSwap = false;
+    let maxStep = 0;
+    let sortingSteps = this.state.sortingSteps.slice();
+    sortingSteps = this.bubbleSort(sortingSteps[0].bars);
+    maxStep = sortingSteps[sortingSteps.length - 1].currStep;
 
     this.setState({
       sortingSteps: sortingSteps,
       maxStep: maxStep,
-      sortingStepsEmpty: false,
     });
   }
   render() {
-    let barVals = [];
-    const firstPosition = this.state.firstPosition;
-    const secondPosition = this.state.secondPosition;
+    const stepIndex = this.state.stepIndex;
+    const maxStep = this.state.maxStep;
+    const pos1 = this.state.pos1;
+    const pos2 = this.state.pos2;
+    let resultBarVals = this.state.resultBarVals;
     let highlightBar = false;
     let isSwap = this.state.isSwap;
-    if (this.state.resultBarVals) {
-      barVals = this.state.resultBarVals;
-    } else {
-      barVals = this.state.unsortedBarVals;
+    if (!resultBarVals) {
+      resultBarVals = this.state.sortingSteps[0].bars;
     }
-    const bars = barVals.map((value, index) => {
-      if (
-        this.state.currStep !== this.state.maxStep &&
-        (index === firstPosition || index === secondPosition)
-      ) {
+    const bars = resultBarVals.map((value, index) => {
+      if (stepIndex !== maxStep && (index === pos1 || index === pos2)) {
         highlightBar = true;
       } else {
         highlightBar = false;
@@ -148,6 +142,7 @@ class Sorter extends React.Component {
         />
       );
     });
+
     return (
       <div>
         <button
@@ -155,11 +150,8 @@ class Sorter extends React.Component {
             this.setState({
               unsortedBarVals: getRandomNums(),
               resultBarVals: null,
-              currStep: 0,
+              stepIndex: 0,
               maxStep: 0,
-              sortingStepsEmpty: true,
-              currFirstPosition: 0,
-              currSecondPosition: 0,
               isSwap: false,
             });
           }}
@@ -170,11 +162,8 @@ class Sorter extends React.Component {
           onClick={() => {
             this.setState({
               resultBarVals: null,
-              currStep: 0,
+              stepIndex: 0,
               maxStep: 0,
-              sortingStepsEmpty: true,
-              currFirstPosition: 0,
-              currSecondPosition: 0,
               isSwap: false,
             });
           }}
