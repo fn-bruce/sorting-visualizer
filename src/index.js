@@ -3,32 +3,23 @@ import ReactDOM from "react-dom";
 import "./index.css";
 
 function Bar(props) {
+  let style = {
+    height: props.value * 10 + "px",
+    backgroundColor: "#3492eb",
+  };
   if (props.highlightBar === true) {
-    let backgroundColor = "#f54266";
+    style.backgroundColor = "#f54266";
     if (props.isSwap) {
-      backgroundColor = "#42f575";
+      style.backgroundColor = "#42f575";
     }
-
-    return (
-      <li style={{ float: "left" }}>
-        <div>{props.value}</div>
-        <div
-          className="bar"
-          style={{
-            height: props.value * 10 + "px",
-            backgroundColor: backgroundColor,
-          }}
-        ></div>
-      </li>
-    );
-  } else {
-    return (
-      <li style={{ float: "left" }}>
-        <div>{props.value}</div>
-        <div className="bar" style={{ height: props.value * 10 + "px" }}></div>
-      </li>
-    );
   }
+
+  return (
+    <li>
+      <div>{props.value}</div>
+      <div className="bar" style={style}></div>
+    </li>
+  );
 }
 
 class Sorter extends React.Component {
@@ -38,11 +29,12 @@ class Sorter extends React.Component {
       sortingSteps: [
         {
           bars: [],
+          stepNum: 0,
+          firstPosition: 0,
+          secondPosition: 0,
         },
       ],
-      unsortedBarVals: [...Array(10)].map(
-        () => Math.floor(Math.random() * 15) + 1
-      ),
+      unsortedBarVals: getRandomNums(),
       resultBarVals: null,
       currStep: 0,
       maxStep: 0,
@@ -54,22 +46,23 @@ class Sorter extends React.Component {
   }
 
   componentDidMount() {
+    const time = 150;
     setInterval(() => {
       if (this.state.currStep < this.state.maxStep) {
         this.nextStep();
       }
-    }, 150);
+    }, time);
   }
 
   nextStep() {
+    const currStep = this.state.currStep + 1;
+    const currBars = this.state.sortingSteps[currStep];
     this.setState({
-      currStep: this.state.currStep + 1,
-      resultBarVals: this.state.sortingSteps[this.state.currStep + 1].bars,
-      firstPosition: this.state.sortingSteps[this.state.currStep + 1]
-        .firstPosition,
-      secondPosition: this.state.sortingSteps[this.state.currStep + 1]
-        .secondPosition,
-      isSwap: this.state.sortingSteps[this.state.currStep + 1].isSwap,
+      currStep: currStep,
+      resultBarVals: currBars.bars,
+      firstPosition: currBars.firstPosition,
+      secondPosition: currBars.secondPosition,
+      isSwap: currBars.isSwap,
     });
   }
 
@@ -160,9 +153,7 @@ class Sorter extends React.Component {
         <button
           onClick={() => {
             this.setState({
-              unsortedBarVals: [...Array(10)].map(
-                () => Math.floor(Math.random() * 15) + 1
-              ),
+              unsortedBarVals: getRandomNums(),
               resultBarVals: null,
               currStep: 0,
               maxStep: 0,
@@ -204,3 +195,7 @@ class Sorter extends React.Component {
 }
 
 ReactDOM.render(<Sorter />, document.getElementById("root"));
+
+function getRandomNums() {
+  return [...Array(10)].map(() => Math.floor(Math.random() * 15) + 1);
+}

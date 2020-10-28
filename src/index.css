@@ -1,7 +1,12 @@
 ul {
   list-style-type: none;
 }
-.bar {
+
+li {
+  float: left;
+}
+
+div .bar {
   float: left;
   width: 25px;
   height: 500px;
