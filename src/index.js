@@ -54,32 +54,29 @@ class Sorter extends React.Component {
   }
 
   componentDidMount() {
-    if (this.sortingStepsEmpty !== []) {
-      setInterval(() => this.nextStep(), 150);
-    }
+    setInterval(() => {
+      if (this.state.currStep < this.state.maxStep) {
+        this.nextStep();
+      }
+    }, 150);
   }
 
   nextStep() {
-    if (this.state.currStep < this.state.maxStep) {
-      this.setState({
-        currStep: this.state.currStep + 1,
-        resultBarVals: this.state.sortingSteps[this.state.currStep + 1].bars,
-        firstPosition: this.state.sortingSteps[this.state.currStep + 1]
-          .firstPosition,
-        secondPosition: this.state.sortingSteps[this.state.currStep + 1]
-          .secondPosition,
-        isSwap: this.state.sortingSteps[this.state.currStep + 1].isSwap,
-      });
-    }
+    this.setState({
+      currStep: this.state.currStep + 1,
+      resultBarVals: this.state.sortingSteps[this.state.currStep + 1].bars,
+      firstPosition: this.state.sortingSteps[this.state.currStep + 1]
+        .firstPosition,
+      secondPosition: this.state.sortingSteps[this.state.currStep + 1]
+        .secondPosition,
+      isSwap: this.state.sortingSteps[this.state.currStep + 1].isSwap,
+    });
   }
 
   handleClick() {
     let unsortedBarVals = this.state.unsortedBarVals.slice();
-    let sortingSteps = this.state.sortingSteps.slice(
-      0,
-      this.state.sortingSteps.length - 1
-    );
-    let maxStep = this.state.maxStep;
+    let sortingSteps = [];
+    let maxStep = 0;
     let isSwap = false;
 
     sortingSteps.push({
@@ -140,7 +137,10 @@ class Sorter extends React.Component {
       barVals = this.state.unsortedBarVals;
     }
     const bars = barVals.map((value, index) => {
-      if (index === firstPosition || index === secondPosition) {
+      if (
+        this.state.currStep !== this.state.maxStep &&
+        (index === firstPosition || index === secondPosition)
+      ) {
         highlightBar = true;
       } else {
         highlightBar = false;
@@ -178,7 +178,13 @@ class Sorter extends React.Component {
         <button
           onClick={() => {
             this.setState({
-              resultBarVals: this.state.unsortedBarVals,
+              resultBarVals: null,
+              currStep: 0,
+              maxStep: 0,
+              sortingStepsEmpty: true,
+              currFirstPosition: 0,
+              currSecondPosition: 0,
+              isSwap: false,
             });
           }}
         >
