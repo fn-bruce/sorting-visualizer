@@ -1,5 +1,9 @@
 import React from "react";
 import ReactDOM from "react-dom";
+import { makeStyles } from "@material-ui/core/styles";
+import Typography from "@material-ui/core/Typography";
+import Slider from "@material-ui/core/Slider";
+import Button from "@material-ui/core/Button";
 import "./index.css";
 
 function Bar(props) {
@@ -104,17 +108,17 @@ class Sorter extends React.Component {
   }
 
   handleClick() {
-    let isSwap = false;
-    let maxStep = 0;
-    let sortingSteps = this.state.sortingSteps.slice();
-    sortingSteps = this.bubbleSort(sortingSteps[0].bars);
-    maxStep = sortingSteps[sortingSteps.length - 1].currStep;
-
+    const unsortedBarVals = this.state.sortingSteps[0].bars.slice();
+    const sortingSteps = this.state.sortingSteps.concat(
+      this.bubbleSort(unsortedBarVals)
+    );
+    const maxStep = sortingSteps[sortingSteps.length - 1].currStep;
     this.setState({
       sortingSteps: sortingSteps,
       maxStep: maxStep,
     });
   }
+
   render() {
     const stepIndex = this.state.stepIndex;
     const maxStep = this.state.maxStep;
@@ -145,42 +149,62 @@ class Sorter extends React.Component {
 
     return (
       <div>
-        <button
-          onClick={() => {
+        <ContainedButtons
+          onRandom={() =>
             this.setState({
-              unsortedBarVals: getRandomNums(),
+              sortingSteps: [
+                {
+                  bars: getRandomNums(),
+                  pos1: 0,
+                  pos2: 1,
+                  currStep: 0,
+                },
+              ],
               resultBarVals: null,
               stepIndex: 0,
               maxStep: 0,
               isSwap: false,
-            });
-          }}
-        >
-          Random
-        </button>
-        <button
-          onClick={() => {
+            })
+          }
+          onRevert={() =>
             this.setState({
-              resultBarVals: null,
+              resultBarVals: this.state.sortingSteps[0].bars,
               stepIndex: 0,
               maxStep: 0,
               isSwap: false,
-            });
-          }}
-        >
-          Revert
-        </button>
-        <button
-          onClick={() => {
-            this.handleClick();
-          }}
-        >
-          Sort
-        </button>
+            })
+          }
+          onClick={() => this.handleClick()}
+        />
         <ul>{bars}</ul>
       </div>
     );
   }
+}
+
+const useStyles = makeStyles((theme) => ({
+  root: {
+    "& > *": {
+      margin: theme.spacing(1),
+    },
+  },
+}));
+
+function ContainedButtons(props) {
+  const classes = useStyles();
+  return (
+    <div className={classes.root}>
+      <Button variant="contained" onClick={props.onRandom}>
+        Random
+      </Button>
+      <Button variant="contained" onClick={props.onRevert}>
+        Revert
+      </Button>
+      <Button variant="contained" onClick={props.onClick}>
+        Sort
+      </Button>
+    </div>
+  );
 }
 
 ReactDOM.render(<Sorter />, document.getElementById("root"));
