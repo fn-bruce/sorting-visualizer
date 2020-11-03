@@ -1,8 +1,6 @@
 import React from "react";
 import ReactDOM from "react-dom";
 import { makeStyles } from "@material-ui/core/styles";
-import Typography from "@material-ui/core/Typography";
-import Slider from "@material-ui/core/Slider";
 import Button from "@material-ui/core/Button";
 import "./index.css";
 
@@ -16,6 +14,10 @@ function Bar(props) {
     if (props.isSwap) {
       style.backgroundColor = "#42f575"; // Green
     }
+  }
+
+  if (props.bar.isSorted) {
+    style.backgroundColor = "#8332a8";
   }
 
   return (
@@ -46,7 +48,7 @@ class Sorter extends React.Component {
   }
 
   componentDidMount() {
-    const time = 150;
+    const time = 100;
     setInterval(() => {
       if (this.state.stepIndex < this.state.maxStep) {
         this.nextStep();
@@ -66,35 +68,45 @@ class Sorter extends React.Component {
     });
   }
 
-  bubbleSort(barVals) {
+  bubbleSort(bars) {
     let sortingSteps = [];
     let isSwap = false;
     let currStep = -1;
-    for (let i = 0; i < barVals.length - 1; i++) {
-      for (let j = 0; j < barVals.length - 1 - i; j++) {
-        if (j === barVals.length - 1 - i) {
+    for (let i = 0; i < bars.length - 1; i++) {
+      for (let j = 0; j < bars.length - i; j++) {
+        if (j === bars.length - 1 - i) {
+          bars[j].isSorted = true;
+          currStep++;
+
+          sortingSteps.push({
+            bars: JSON.parse(JSON.stringify(bars)),
+            pos1: j,
+            pos2: j + 1,
+            isSwap: isSwap,
+            currStep: currStep,
+          });
           break;
         }
 
-        if (barVals[j] > barVals[j + 1]) {
+        if (bars[j].barVal > bars[j + 1].barVal) {
           currStep++;
           sortingSteps.push({
-            bars: barVals.slice(),
+            bars: JSON.parse(JSON.stringify(bars)),
             pos1: j,
             pos2: j + 1,
             isSwap: isSwap,
             currStep: currStep,
           });
 
-          let temp = barVals[j];
-          barVals[j] = barVals[j + 1];
-          barVals[j + 1] = temp;
+          let temp = bars[j];
+          bars[j] = bars[j + 1];
+          bars[j + 1] = temp;
           isSwap = true;
         }
 
         currStep++;
         sortingSteps.push({
-          bars: barVals.slice(),
+          bars: JSON.parse(JSON.stringify(bars)),
           pos1: j,
           pos2: j + 1,
           isSwap: isSwap,
@@ -104,13 +116,35 @@ class Sorter extends React.Component {
         isSwap = false;
       }
     }
+    bars[0].isSorted = true;
+    bars[1].isSorted = true;
+    currStep++;
+    sortingSteps.push({
+      bars: JSON.parse(JSON.stringify(bars)),
+      pos1: 0,
+      pos2: 1,
+      isSwap: false,
+      currStep: currStep,
+    });
+
+    currStep++;
+    sortingSteps.push({
+      bars: JSON.parse(JSON.stringify(bars)),
+      pos1: 0,
+      pos2: 1,
+      isSwap: false,
+      currStep: currStep,
+    });
+
     return sortingSteps;
   }
 
   handleClick() {
-    const unsortedBarVals = this.state.sortingSteps[0].bars.slice();
+    const unsortedBarVals = JSON.parse(
+      JSON.stringify(this.state.sortingSteps[0].bars)
+    );
     const sortingSteps = this.state.sortingSteps.concat(
-      this.bubbleSort(unsortedBarVals)
+      JSON.parse(JSON.stringify(this.bubbleSort(unsortedBarVals)))
     );
     const maxStep = sortingSteps[sortingSteps.length - 1].currStep;
     this.setState({
@@ -130,7 +164,7 @@ class Sorter extends React.Component {
     if (!resultBarVals) {
       resultBarVals = this.state.sortingSteps[0].bars;
     }
-    const bars = resultBarVals.map((value, index) => {
+    const bars = resultBarVals.map((bar, index) => {
       if (stepIndex !== maxStep && (index === pos1 || index === pos2)) {
         highlightBar = true;
       } else {
@@ -140,7 +174,8 @@ class Sorter extends React.Component {
       return (
         <Bar
           key={"bar" + index}
-          value={value}
+          bar={bar}
+          value={bar.barVal}
           highlightBar={highlightBar}
           isSwap={isSwap}
         />
@@ -168,7 +203,7 @@ class Sorter extends React.Component {
           }
           onRevert={() =>
             this.setState({
-              resultBarVals: this.state.sortingSteps[0].bars,
+              resultBarVals: null,
               stepIndex: 0,
               maxStep: 0,
               isSwap: false,
@@ -210,5 +245,8 @@ function ContainedButtons(props) {
 ReactDOM.render(<Sorter />, document.getElementById("root"));
 
 function getRandomNums() {
-  return [...Array(10)].map(() => Math.floor(Math.random() * 15) + 1);
+  return [...Array(10)].map(() => ({
+    barVal: Math.floor(Math.random() * 15) + 1,
+    isSorted: false,
+  }));
 }
