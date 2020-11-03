@@ -17,7 +17,7 @@ function Bar(props) {
   }
 
   if (props.bar.isSorted) {
-    style.backgroundColor = "#8332a8";
+    style.backgroundColor = "#8332a8"; // Purple
   }
 
   return (
@@ -44,6 +44,7 @@ class Sorter extends React.Component {
       stepIndex: 0,
       maxStep: 0,
       isSwap: false,
+      barLength: 10,
     };
   }
 
@@ -127,16 +128,70 @@ class Sorter extends React.Component {
       currStep: currStep,
     });
 
+    this.doSortingAnimation(sortingSteps, currStep);
+    return sortingSteps;
+  }
+
+  doSortingAnimation(sortingSteps, currStep) {
+    // Reset all bars to default color
     currStep++;
     sortingSteps.push({
-      bars: JSON.parse(JSON.stringify(bars)),
+      bars: JSON.parse(
+        JSON.stringify(
+          sortingSteps[sortingSteps.length - 1].bars.map((bar) => ({
+            barVal: bar.barVal,
+            isSorted: false,
+          }))
+        )
+      ),
       pos1: 0,
       pos2: 1,
       isSwap: false,
       currStep: currStep,
     });
 
-    return sortingSteps;
+    for (let i = 0; i < this.state.barLength; i++) {
+      currStep++;
+      sortingSteps.push({
+        bars: JSON.parse(
+          JSON.stringify(
+            sortingSteps[sortingSteps.length - 1].bars.map((bar, index) => {
+              let isSorted = false;
+
+              if (index <= i) {
+                isSorted = true;
+              }
+
+              return {
+                barVal: bar.barVal,
+                isSorted: isSorted,
+              };
+            })
+          )
+        ),
+        pos1: 0,
+        pos2: 1,
+        isSwap: false,
+        currStep: currStep,
+      });
+    }
+
+    // Reset all bars to default color
+    currStep++;
+    sortingSteps.push({
+      bars: JSON.parse(
+        JSON.stringify(
+          sortingSteps[sortingSteps.length - 1].bars.map((bar) => ({
+            barVal: bar.barVal,
+            isSorted: false,
+          }))
+        )
+      ),
+      pos1: 0,
+      pos2: 1,
+      isSwap: false,
+      currStep: currStep,
+    });
   }
 
   handleClick() {
@@ -146,7 +201,7 @@ class Sorter extends React.Component {
     const sortingSteps = this.state.sortingSteps.concat(
       JSON.parse(JSON.stringify(this.bubbleSort(unsortedBarVals)))
     );
-    const maxStep = sortingSteps[sortingSteps.length - 1].currStep;
+    const maxStep = sortingSteps[sortingSteps.length - 1].currStep + 1;
     this.setState({
       sortingSteps: sortingSteps,
       maxStep: maxStep,
