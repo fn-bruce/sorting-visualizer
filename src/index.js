@@ -4,20 +4,23 @@ import { makeStyles } from "@material-ui/core/styles";
 import Button from "@material-ui/core/Button";
 import "./index.css";
 
+const DEFAULT_COLOR = "#2782ff"; // Blue
+const HIGHLIGHT_COLOR = "#db0138"; // Red
+const SWAP_COLOR = "#000000"; // Green
+const SORTED_COLOR = "#9b00b8"; // Purple
+
 function Bar(props) {
   let style = {
     height: props.value * 10 + "px",
-    backgroundColor: "#2782ff", // Blue
+    backgroundColor: DEFAULT_COLOR,
   };
-  if (props.highlightBar === true) {
-    style.backgroundColor = "#db0138"; // Red
-    if (props.isSwap) {
-      style.backgroundColor = "#000000"; // Green
-    }
-  }
-
   if (props.bar.isSorted) {
-    style.backgroundColor = "#9b00b8"; // Purple
+    style.backgroundColor = SORTED_COLOR;
+  } else if (props.highlightBar === true) {
+    style.backgroundColor = HIGHLIGHT_COLOR;
+    if (props.isSwap) {
+      style.backgroundColor = SWAP_COLOR;
+    }
   }
 
   return (
@@ -31,10 +34,12 @@ function Bar(props) {
 class Sorter extends React.Component {
   constructor(props) {
     super(props);
+
+    const barsLength = 10;
     this.state = {
       sortingSteps: [
         {
-          bars: getRandomNums(),
+          bars: getRandomNums(barsLength),
           currStep: 0,
         },
       ],
@@ -42,7 +47,7 @@ class Sorter extends React.Component {
       stepIndex: 0,
       maxStep: 0,
       isSwap: false,
-      barLength: 10,
+      barLength: barsLength,
     };
   }
 
@@ -69,30 +74,7 @@ class Sorter extends React.Component {
     let sortingSteps = [];
     let isSwap = false;
     let currStep = 1;
-    for (let i = 0; i < bars.length - 1; i++) {
-      for (let j = 0; j < bars.length - i; j++) {
-        isSwap = false;
-        if (j === bars.length - 1 - i) {
-          bars[j].isSorted = true;
-          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
-
-          break;
-        }
-
-        if (bars[j].barVal > bars[j + 1].barVal) {
-          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
-
-          let temp = bars[j];
-          bars[j] = bars[j + 1];
-          bars[j + 1] = temp;
-          isSwap = true;
-        }
-
-        insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
-      }
-    }
-
-    function getHighlightedBars(bars, index1, index2) {
+    const getHighlightedBars = (bars, index1, index2) => {
       return JSON.parse(
         JSON.stringify(
           bars.map((bar, index) => {
@@ -105,9 +87,8 @@ class Sorter extends React.Component {
           })
         )
       );
-    }
-
-    function getSortedBars(bars, index1, index2) {
+    };
+    const getSortedBars = (bars, index1, index2) => {
       return JSON.parse(
         JSON.stringify(
           bars.map((value, index) => {
@@ -118,14 +99,33 @@ class Sorter extends React.Component {
           })
         )
       );
-    }
-
-    function insertStep(bars, isSwap, currStep) {
+    };
+    const insertStep = (bars, isSwap, currStep) => {
       sortingSteps.push({
         bars: bars,
         isSwap: isSwap,
         currStep: currStep,
       });
+    };
+
+    for (let i = 0; i < bars.length - 1; i++) {
+      for (let j = 0; j < bars.length - i; j++) {
+        isSwap = false;
+        if (j === bars.length - 1 - i) {
+          bars[j].isSorted = true;
+          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
+          break;
+        }
+
+        if (bars[j].barVal > bars[j + 1].barVal) {
+          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
+          let temp = bars[j];
+          bars[j] = bars[j + 1];
+          bars[j + 1] = temp;
+          isSwap = true;
+        }
+        insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
+      }
     }
 
     insertStep(getSortedBars(bars, 0, 1), false, currStep++);
@@ -368,8 +368,8 @@ function ContainedButtons(props) {
 
 ReactDOM.render(<Sorter />, document.getElementById("root"));
 
-function getRandomNums() {
-  return [...Array(10)].map((_, index) => ({
+function getRandomNums(length) {
+  return [...Array(length)].map((_, index) => ({
     index: index,
     barVal: Math.floor(Math.random() * 15) + 1,
     isSorted: false,
