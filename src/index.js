@@ -68,50 +68,19 @@ class Sorter extends React.Component {
   bubbleSort(bars) {
     let sortingSteps = [];
     let isSwap = false;
-    let currStep = 0;
+    let currStep = 1;
     for (let i = 0; i < bars.length - 1; i++) {
       for (let j = 0; j < bars.length - i; j++) {
         isSwap = false;
         if (j === bars.length - 1 - i) {
           bars[j].isSorted = true;
-
-          sortingSteps.push({
-            bars: JSON.parse(
-              JSON.stringify(
-                bars.map((bar, index) => {
-                  if (index === j || index === j + 1) {
-                    bar.isHighlighted = true;
-                  } else {
-                    bar.isHighlighted = false;
-                  }
-                  return bar;
-                })
-              )
-            ),
-            isSwap: isSwap,
-            currStep: currStep++,
-          });
+          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
 
           break;
         }
 
         if (bars[j].barVal > bars[j + 1].barVal) {
-          sortingSteps.push({
-            bars: JSON.parse(
-              JSON.stringify(
-                bars.map((bar, index) => {
-                  if (index === j || index === j + 1) {
-                    bar.isHighlighted = true;
-                  } else {
-                    bar.isHighlighted = false;
-                  }
-                  return bar;
-                })
-              )
-            ),
-            isSwap: isSwap,
-            currStep: currStep++,
-          });
+          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
 
           let temp = bars[j];
           bars[j] = bars[j + 1];
@@ -119,40 +88,47 @@ class Sorter extends React.Component {
           isSwap = true;
         }
 
-        sortingSteps.push({
-          bars: JSON.parse(
-            JSON.stringify(
-              bars.map((bar, index) => {
-                if (index === j || index === j + 1) {
-                  bar.isHighlighted = true;
-                } else {
-                  bar.isHighlighted = false;
-                }
-                return bar;
-              })
-            )
-          ),
-          isSwap: isSwap,
-          currStep: currStep++,
-        });
+        insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
       }
     }
 
-    sortingSteps.push({
-      bars: JSON.parse(
+    function getHighlightedBars(bars, index1, index2) {
+      return JSON.parse(
+        JSON.stringify(
+          bars.map((bar, index) => {
+            if (index === index1 || index === index2) {
+              bar.isHighlighted = true;
+            } else {
+              bar.isHighlighted = false;
+            }
+            return bar;
+          })
+        )
+      );
+    }
+
+    function getSortedBars(bars, index1, index2) {
+      return JSON.parse(
         JSON.stringify(
           bars.map((value, index) => {
-            if (index === 0 || index === 1) {
+            if (index === index1 || index === index2) {
               value.isSorted = true;
             }
             return value;
           })
         )
-      ),
-      isSwap: false,
-      currStep: currStep++,
-    });
+      );
+    }
 
+    function insertStep(bars, isSwap, currStep) {
+      sortingSteps.push({
+        bars: bars,
+        isSwap: isSwap,
+        currStep: currStep,
+      });
+    }
+
+    insertStep(getSortedBars(bars, 0, 1), false, currStep++);
     this.doSortingAnimation(sortingSteps, currStep);
     return sortingSteps;
   }
@@ -208,7 +184,6 @@ class Sorter extends React.Component {
         isSorted: value.isSorted,
       }));
 
-      currStep++;
       sortingSteps.push({
         bars: JSON.parse(
           JSON.stringify(
@@ -227,7 +202,7 @@ class Sorter extends React.Component {
             })
           )
         ),
-        currStep: currStep,
+        currStep: currStep++,
       });
 
       return result;
@@ -238,7 +213,6 @@ class Sorter extends React.Component {
 
   doSortingAnimation(sortingSteps, currStep) {
     // Reset all bars to default color
-    currStep++;
     sortingSteps.push({
       bars: JSON.parse(
         JSON.stringify(
@@ -249,11 +223,10 @@ class Sorter extends React.Component {
         )
       ),
       isSwap: false,
-      currStep: currStep,
+      currStep: currStep++,
     });
 
     for (let i = 0; i < this.state.barLength; i++) {
-      currStep++;
       sortingSteps.push({
         bars: JSON.parse(
           JSON.stringify(
@@ -272,12 +245,11 @@ class Sorter extends React.Component {
           )
         ),
         isSwap: false,
-        currStep: currStep,
+        currStep: currStep++,
       });
     }
 
     // Reset all bars to default color
-    currStep++;
     sortingSteps.push({
       bars: JSON.parse(
         JSON.stringify(
@@ -288,7 +260,7 @@ class Sorter extends React.Component {
         )
       ),
       isSwap: false,
-      currStep: currStep,
+      currStep: currStep++,
     });
   }
 
@@ -315,27 +287,18 @@ class Sorter extends React.Component {
   }
 
   render() {
-    const stepIndex = this.state.stepIndex;
-    const maxStep = this.state.maxStep;
     let resultBarVals = this.state.resultBarVals;
-    let highlightBar = false;
     let isSwap = this.state.isSwap;
     if (!resultBarVals) {
       resultBarVals = this.state.sortingSteps[0].bars;
     }
     const bars = resultBarVals.map((bar, index) => {
-      if (stepIndex !== maxStep && bar.isHighlighted === true) {
-        highlightBar = true;
-      } else {
-        highlightBar = false;
-      }
-
       return (
         <Bar
           key={"bar" + index}
           bar={bar}
           value={bar.barVal}
-          highlightBar={highlightBar}
+          highlightBar={bar.isHighlighted}
           isSwap={isSwap}
         />
       );
