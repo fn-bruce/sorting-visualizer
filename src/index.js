@@ -35,9 +35,6 @@ class Sorter extends React.Component {
       sortingSteps: [
         {
           bars: getRandomNums(),
-          pos1: 0,
-          pos2: 1,
-          pos3: undefined,
           currStep: 0,
         },
       ],
@@ -64,8 +61,6 @@ class Sorter extends React.Component {
     this.setState({
       stepIndex: stepIndex,
       resultBarVals: currBars.bars,
-      pos1: currBars.pos1,
-      pos2: currBars.pos2,
       isSwap: currBars.isSwap,
     });
   }
@@ -76,28 +71,46 @@ class Sorter extends React.Component {
     let currStep = 0;
     for (let i = 0; i < bars.length - 1; i++) {
       for (let j = 0; j < bars.length - i; j++) {
+        isSwap = false;
         if (j === bars.length - 1 - i) {
           bars[j].isSorted = true;
-          currStep++;
 
           sortingSteps.push({
-            bars: JSON.parse(JSON.stringify(bars)),
-            pos1: j,
-            pos2: j + 1,
+            bars: JSON.parse(
+              JSON.stringify(
+                bars.map((bar, index) => {
+                  if (index === j || index === j + 1) {
+                    bar.isHighlighted = true;
+                  } else {
+                    bar.isHighlighted = false;
+                  }
+                  return bar;
+                })
+              )
+            ),
             isSwap: isSwap,
-            currStep: currStep,
+            currStep: currStep++,
           });
+
           break;
         }
 
         if (bars[j].barVal > bars[j + 1].barVal) {
-          currStep++;
           sortingSteps.push({
-            bars: JSON.parse(JSON.stringify(bars)),
-            pos1: j,
-            pos2: j + 1,
+            bars: JSON.parse(
+              JSON.stringify(
+                bars.map((bar, index) => {
+                  if (index === j || index === j + 1) {
+                    bar.isHighlighted = true;
+                  } else {
+                    bar.isHighlighted = false;
+                  }
+                  return bar;
+                })
+              )
+            ),
             isSwap: isSwap,
-            currStep: currStep,
+            currStep: currStep++,
           });
 
           let temp = bars[j];
@@ -106,27 +119,38 @@ class Sorter extends React.Component {
           isSwap = true;
         }
 
-        currStep++;
         sortingSteps.push({
-          bars: JSON.parse(JSON.stringify(bars)),
-          pos1: j,
-          pos2: j + 1,
+          bars: JSON.parse(
+            JSON.stringify(
+              bars.map((bar, index) => {
+                if (index === j || index === j + 1) {
+                  bar.isHighlighted = true;
+                } else {
+                  bar.isHighlighted = false;
+                }
+                return bar;
+              })
+            )
+          ),
           isSwap: isSwap,
-          currStep: currStep,
+          currStep: currStep++,
         });
-
-        isSwap = false;
       }
     }
-    bars[0].isSorted = true;
-    bars[1].isSorted = true;
-    currStep++;
+
     sortingSteps.push({
-      bars: JSON.parse(JSON.stringify(bars)),
-      pos1: 0,
-      pos2: 1,
+      bars: JSON.parse(
+        JSON.stringify(
+          bars.map((value, index) => {
+            if (index === 0 || index === 1) {
+              value.isSorted = true;
+            }
+            return value;
+          })
+        )
+      ),
       isSwap: false,
-      currStep: currStep,
+      currStep: currStep++,
     });
 
     this.doSortingAnimation(sortingSteps, currStep);
@@ -203,8 +227,6 @@ class Sorter extends React.Component {
             })
           )
         ),
-        pos1: 0,
-        pos2: 1,
         currStep: currStep,
       });
 
@@ -226,8 +248,6 @@ class Sorter extends React.Component {
           }))
         )
       ),
-      pos1: 0,
-      pos2: 1,
       isSwap: false,
       currStep: currStep,
     });
@@ -251,8 +271,6 @@ class Sorter extends React.Component {
             })
           )
         ),
-        pos1: 0,
-        pos2: 1,
         isSwap: false,
         currStep: currStep,
       });
@@ -269,8 +287,6 @@ class Sorter extends React.Component {
           }))
         )
       ),
-      pos1: 0,
-      pos2: 1,
       isSwap: false,
       currStep: currStep,
     });
@@ -301,8 +317,6 @@ class Sorter extends React.Component {
   render() {
     const stepIndex = this.state.stepIndex;
     const maxStep = this.state.maxStep;
-    const pos1 = this.state.pos1;
-    const pos2 = this.state.pos2;
     let resultBarVals = this.state.resultBarVals;
     let highlightBar = false;
     let isSwap = this.state.isSwap;
@@ -310,7 +324,7 @@ class Sorter extends React.Component {
       resultBarVals = this.state.sortingSteps[0].bars;
     }
     const bars = resultBarVals.map((bar, index) => {
-      if (stepIndex !== maxStep && (index === pos1 || index === pos2)) {
+      if (stepIndex !== maxStep && bar.isHighlighted === true) {
         highlightBar = true;
       } else {
         highlightBar = false;
@@ -335,8 +349,6 @@ class Sorter extends React.Component {
               sortingSteps: [
                 {
                   bars: getRandomNums(),
-                  pos1: 0,
-                  pos2: 1,
                   currStep: 0,
                 },
               ],
@@ -398,5 +410,6 @@ function getRandomNums() {
     index: index,
     barVal: Math.floor(Math.random() * 15) + 1,
     isSorted: false,
+    isHighlighted: false,
   }));
 }
