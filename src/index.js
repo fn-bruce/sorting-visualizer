@@ -7,17 +7,17 @@ import "./index.css";
 function Bar(props) {
   let style = {
     height: props.value * 10 + "px",
-    backgroundColor: "#3492eb", // Blue
+    backgroundColor: "#2782ff", // Blue
   };
   if (props.highlightBar === true) {
-    style.backgroundColor = "#f54266"; // Red
+    style.backgroundColor = "#db0138"; // Red
     if (props.isSwap) {
-      style.backgroundColor = "#42f575"; // Green
+      style.backgroundColor = "#000000"; // Green
     }
   }
 
   if (props.bar.isSorted) {
-    style.backgroundColor = "#8332a8"; // Purple
+    style.backgroundColor = "#9b00b8"; // Purple
   }
 
   return (
@@ -37,6 +37,7 @@ class Sorter extends React.Component {
           bars: getRandomNums(),
           pos1: 0,
           pos2: 1,
+          pos3: undefined,
           currStep: 0,
         },
       ],
@@ -72,7 +73,7 @@ class Sorter extends React.Component {
   bubbleSort(bars) {
     let sortingSteps = [];
     let isSwap = false;
-    let currStep = -1;
+    let currStep = 0;
     for (let i = 0; i < bars.length - 1; i++) {
       for (let j = 0; j < bars.length - i; j++) {
         if (j === bars.length - 1 - i) {
@@ -129,6 +130,87 @@ class Sorter extends React.Component {
     });
 
     this.doSortingAnimation(sortingSteps, currStep);
+    return sortingSteps;
+  }
+
+  doMergeSort(bars) {
+    let sortingSteps = [];
+    let currStep = 0;
+    mergeSort(JSON.parse(JSON.stringify(bars)));
+
+    function mergeSort(arr) {
+      if (arr.length === 1) {
+        return arr;
+      }
+
+      let arr1 = arr.slice(0, Math.ceil(arr.length / 2));
+      let arr2 = arr.slice(Math.ceil(arr.length / 2), arr.length);
+
+      arr1 = mergeSort(JSON.parse(JSON.stringify(arr1)));
+      arr2 = mergeSort(JSON.parse(JSON.stringify(arr2)));
+
+      return merge(
+        JSON.parse(JSON.stringify(arr1)),
+        JSON.parse(JSON.stringify(arr2))
+      );
+    }
+
+    function merge(arr1, arr2) {
+      const before = JSON.parse(JSON.stringify(arr1.concat(arr2)));
+      let result = [];
+      while (arr1.length > 0 && arr2.length > 0) {
+        if (arr1[0].barVal > arr2[0].barVal) {
+          result.push(arr2[0]);
+          arr2.shift();
+        } else {
+          result.push(arr1[0]);
+          arr1.shift();
+        }
+      }
+
+      while (arr1.length > 0) {
+        result.push(arr1[0]);
+        arr1.shift();
+      }
+
+      while (arr2.length > 0) {
+        result.push(arr2[0]);
+        arr2.shift();
+      }
+
+      result = result.map((value, index) => ({
+        index: before[index].index,
+        barVal: value.barVal,
+        isSorted: value.isSorted,
+      }));
+
+      currStep++;
+      sortingSteps.push({
+        bars: JSON.parse(
+          JSON.stringify(
+            bars.map((value) => {
+              for (let i = 0; i < result.length; i++) {
+                if (value.index === result[i].index) {
+                  return {
+                    index: value.index,
+                    barVal: result[i].barVal,
+                    isSorted: value.isSorted,
+                  };
+                }
+              }
+
+              return value;
+            })
+          )
+        ),
+        pos1: 0,
+        pos2: 1,
+        currStep: currStep,
+      });
+
+      return result;
+    }
+
     return sortingSteps;
   }
 
@@ -194,14 +276,22 @@ class Sorter extends React.Component {
     });
   }
 
-  handleClick() {
+  handleClick(sortType) {
     const unsortedBarVals = JSON.parse(
       JSON.stringify(this.state.sortingSteps[0].bars)
     );
-    const sortingSteps = this.state.sortingSteps.concat(
-      JSON.parse(JSON.stringify(this.bubbleSort(unsortedBarVals)))
-    );
-    const maxStep = sortingSteps[sortingSteps.length - 1].currStep + 1;
+    let sortingSteps = this.state.sortingSteps;
+    if (sortType === "Bubble Sort") {
+      sortingSteps = sortingSteps.concat(
+        JSON.parse(JSON.stringify(this.bubbleSort(unsortedBarVals)))
+      );
+    } else if (sortType === "Merge Sort") {
+      sortingSteps = sortingSteps.concat(
+        JSON.parse(JSON.stringify(this.doMergeSort(unsortedBarVals)))
+      );
+    }
+
+    const maxStep = sortingSteps[sortingSteps.length - 1].currStep;
     this.setState({
       sortingSteps: sortingSteps,
       maxStep: maxStep,
@@ -264,7 +354,8 @@ class Sorter extends React.Component {
               isSwap: false,
             })
           }
-          onClick={() => this.handleClick()}
+          bubbleSort={() => this.handleClick("Bubble Sort")}
+          mergeSort={() => this.handleClick("Merge Sort")}
         />
         <ul>{bars}</ul>
       </div>
@@ -290,8 +381,11 @@ function ContainedButtons(props) {
       <Button variant="contained" onClick={props.onRevert}>
         Revert
       </Button>
-      <Button variant="contained" onClick={props.onClick}>
-        Sort
+      <Button variant="contained" onClick={props.bubbleSort}>
+        Bubble Sort
+      </Button>
+      <Button variant="contained" onClick={props.mergeSort}>
+        Merge Sort
       </Button>
     </div>
   );
@@ -300,7 +394,8 @@ function ContainedButtons(props) {
 ReactDOM.render(<Sorter />, document.getElementById("root"));
 
 function getRandomNums() {
-  return [...Array(10)].map(() => ({
+  return [...Array(10)].map((_, index) => ({
+    index: index,
     barVal: Math.floor(Math.random() * 15) + 1,
     isSorted: false,
   }));
