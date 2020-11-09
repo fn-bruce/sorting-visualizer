@@ -22,6 +22,15 @@ function Bar(props) {
   );
 }
 
+function Bars(props) {
+  const bars = props.bars.map((bar, index) => {
+    return (
+      <Bar key={"bar" + index} bar={bar} value={bar.barVal} color={bar.color} />
+    );
+  });
+  return bars;
+}
+
 class Sorter extends React.Component {
   constructor(props) {
     super(props);
@@ -197,16 +206,18 @@ class Sorter extends React.Component {
   }
 
   doSortingAnimation(sortingSteps, currStep) {
+    const defaultBars = JSON.parse(
+      JSON.stringify(
+        sortingSteps[sortingSteps.length - 1].bars.map((bar) => ({
+          barVal: bar.barVal,
+          color: DEFAULT_COLOR,
+        }))
+      )
+    );
+
     // Reset all bars to default color
     sortingSteps.push({
-      bars: JSON.parse(
-        JSON.stringify(
-          sortingSteps[sortingSteps.length - 1].bars.map((bar) => ({
-            barVal: bar.barVal,
-            color: DEFAULT_COLOR,
-          }))
-        )
-      ),
+      bars: defaultBars,
       currStep: currStep++,
     });
 
@@ -233,14 +244,7 @@ class Sorter extends React.Component {
 
     // Reset all bars to default color
     sortingSteps.push({
-      bars: JSON.parse(
-        JSON.stringify(
-          sortingSteps[sortingSteps.length - 1].bars.map((bar) => ({
-            barVal: bar.barVal,
-            isSorted: false,
-          }))
-        )
-      ),
+      bars: defaultBars,
       currStep: currStep++,
     });
   }
@@ -271,17 +275,6 @@ class Sorter extends React.Component {
     if (!resultBarVals) {
       resultBarVals = this.state.sortingSteps[0].bars;
     }
-    const bars = resultBarVals.map((bar, index) => {
-      return (
-        <Bar
-          key={"bar" + index}
-          bar={bar}
-          value={bar.barVal}
-          color={bar.color}
-        />
-      );
-    });
-
     return (
       <div>
         <ContainedButtons
@@ -309,7 +302,9 @@ class Sorter extends React.Component {
           mergeSort={() => this.handleClick("Merge Sort")}
           disabled={this.state.doSort}
         />
-        <ul>{bars}</ul>
+        <ul>
+          <Bars bars={resultBarVals} />
+        </ul>
       </div>
     );
   }
@@ -365,8 +360,6 @@ function getRandomNums(length) {
   return [...Array(length)].map((_, index) => ({
     index: index,
     barVal: Math.floor(Math.random() * 15) + 1,
-    isSorted: false,
-    isHighlighted: false,
     color: DEFAULT_COLOR,
   }));
 }
