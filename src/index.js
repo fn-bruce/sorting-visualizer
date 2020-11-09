@@ -43,30 +43,36 @@ class Sorter extends React.Component {
           currStep: 0,
         },
       ],
+      barLength: barsLength,
+      isSwap: false,
       resultBarVals: null,
       stepIndex: 0,
-      maxStep: 0,
-      isSwap: false,
-      barLength: barsLength,
+      doSort: false,
     };
   }
 
   componentDidMount() {
     const time = 100;
-    setInterval(() => {
-      if (this.state.stepIndex < this.state.maxStep) {
+    this.animateSortID = setInterval(() => {
+      if (this.state.doSort) {
         this.nextStep();
       }
     }, time);
   }
 
+  componentWillMount() {
+    clearInterval(this.animateSortID);
+  }
+
   nextStep() {
     const stepIndex = this.state.stepIndex + 1;
     const currBars = this.state.sortingSteps[stepIndex];
+    const numSortingSteps = this.state.sortingSteps.length;
     this.setState({
       stepIndex: stepIndex,
       resultBarVals: currBars.bars,
       isSwap: currBars.isSwap,
+      doSort: stepIndex === numSortingSteps - 1 ? false : true,
     });
   }
 
@@ -279,10 +285,9 @@ class Sorter extends React.Component {
       );
     }
 
-    const maxStep = sortingSteps[sortingSteps.length - 1].currStep;
     this.setState({
       sortingSteps: sortingSteps,
-      maxStep: maxStep,
+      doSort: true,
     });
   }
 
@@ -311,26 +316,27 @@ class Sorter extends React.Component {
             this.setState({
               sortingSteps: [
                 {
-                  bars: getRandomNums(),
+                  bars: getRandomNums(this.state.barLength),
                   currStep: 0,
                 },
               ],
               resultBarVals: null,
               stepIndex: 0,
-              maxStep: 0,
               isSwap: false,
             })
           }
           onRevert={() =>
             this.setState({
+              sortingSteps: this.state.sortingSteps.slice(0, 1),
               resultBarVals: null,
               stepIndex: 0,
-              maxStep: 0,
               isSwap: false,
+              doSort: false,
             })
           }
           bubbleSort={() => this.handleClick("Bubble Sort")}
           mergeSort={() => this.handleClick("Merge Sort")}
+          disabled={this.state.doSort}
         />
         <ul>{bars}</ul>
       </div>
@@ -350,16 +356,32 @@ function ContainedButtons(props) {
   const classes = useStyles();
   return (
     <div className={classes.root}>
-      <Button variant="contained" onClick={props.onRandom}>
+      <Button
+        variant="contained"
+        onClick={props.onRandom}
+        disabled={props.disabled}
+      >
         Random
       </Button>
-      <Button variant="contained" onClick={props.onRevert}>
+      <Button
+        variant="contained"
+        onClick={props.onRevert}
+        disabled={props.disabled}
+      >
         Revert
       </Button>
-      <Button variant="contained" onClick={props.bubbleSort}>
+      <Button
+        variant="contained"
+        onClick={props.bubbleSort}
+        disabled={props.disabled}
+      >
         Bubble Sort
       </Button>
-      <Button variant="contained" onClick={props.mergeSort}>
+      <Button
+        variant="contained"
+        onClick={props.mergeSort}
+        disabled={props.disabled}
+      >
         Merge Sort
       </Button>
     </div>
