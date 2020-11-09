@@ -44,9 +44,9 @@ class Sorter extends React.Component {
         },
       ],
       barLength: barsLength,
-      isSwap: false,
       resultBarVals: null,
       stepIndex: 0,
+      isSwap: false,
       doSort: false,
     };
   }
@@ -106,114 +106,93 @@ class Sorter extends React.Component {
         )
       );
     };
-    const insertStep = (bars, isSwap, currStep) => {
-      sortingSteps.push({
-        bars: bars,
-        isSwap: isSwap,
-        currStep: currStep,
-      });
-    };
 
     for (let i = 0; i < bars.length - 1; i++) {
       for (let j = 0; j < bars.length - i; j++) {
         isSwap = false;
         if (j === bars.length - 1 - i) {
           bars[j].isSorted = true;
-          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
+          sortingSteps.push({
+            bars: getHighlightedBars(bars, j, j + 1),
+            isSwap: isSwap,
+            currStep: currStep++,
+          });
           break;
         }
 
         if (bars[j].barVal > bars[j + 1].barVal) {
-          insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
+          sortingSteps.push({
+            bars: getHighlightedBars(bars, j, j + 1),
+            isSwap: isSwap,
+            currStep: currStep++,
+          });
           let temp = bars[j];
           bars[j] = bars[j + 1];
           bars[j + 1] = temp;
           isSwap = true;
         }
-        insertStep(getHighlightedBars(bars, j, j + 1), isSwap, currStep++);
+        sortingSteps.push({
+          bars: getHighlightedBars(bars, j, j + 1),
+          isSwap: isSwap,
+          currStep: currStep++,
+        });
       }
     }
 
-    insertStep(getSortedBars(bars, 0, 1), false, currStep++);
+    sortingSteps.push({
+      bars: getSortedBars(bars, 0, 1),
+      isSwap: false,
+      currStep: currStep++,
+    });
     this.doSortingAnimation(sortingSteps, currStep);
     return sortingSteps;
   }
 
-  doMergeSort(bars) {
+  mergeSort(bars) {
     let sortingSteps = [];
-    let currStep = 0;
-    mergeSort(JSON.parse(JSON.stringify(bars)));
-
-    function mergeSort(arr) {
-      if (arr.length === 1) {
-        return arr;
+    function mergeSort(bars) {
+      if (bars.length === 1) {
+        return bars;
       }
 
-      let arr1 = arr.slice(0, Math.ceil(arr.length / 2));
-      let arr2 = arr.slice(Math.ceil(arr.length / 2), arr.length);
+      let bars1 = bars.slice(0, Math.ceil(bars.length / 2));
+      let bars2 = bars.slice(Math.ceil(bars.length / 2), bars.length);
 
-      arr1 = mergeSort(JSON.parse(JSON.stringify(arr1)));
-      arr2 = mergeSort(JSON.parse(JSON.stringify(arr2)));
+      bars1 = mergeSort(bars1);
+      bars2 = mergeSort(bars2);
 
-      return merge(
-        JSON.parse(JSON.stringify(arr1)),
-        JSON.parse(JSON.stringify(arr2))
-      );
+      return merge(bars1, bars2);
     }
 
-    function merge(arr1, arr2) {
-      const before = JSON.parse(JSON.stringify(arr1.concat(arr2)));
+    function merge(bars1, bars2) {
       let result = [];
-      while (arr1.length > 0 && arr2.length > 0) {
-        if (arr1[0].barVal > arr2[0].barVal) {
-          result.push(arr2[0]);
-          arr2.shift();
+      while (bars1.length > 0 && bars2.length > 0) {
+        if (bars1[0].barVal > bars2[0].barVal) {
+          result.push(bars2[0]);
+          bars2.shift();
         } else {
-          result.push(arr1[0]);
-          arr1.shift();
+          result.push(bars1[0]);
+          bars1.shift();
         }
       }
 
-      while (arr1.length > 0) {
-        result.push(arr1[0]);
-        arr1.shift();
+      while (bars1.length > 0) {
+        result.push(bars1[0]);
+        bars1.shift();
       }
 
-      while (arr2.length > 0) {
-        result.push(arr2[0]);
-        arr2.shift();
+      while (bars2.length > 0) {
+        result.push(bars2[0]);
+        bars2.shift();
       }
-
-      result = result.map((value, index) => ({
-        index: before[index].index,
-        barVal: value.barVal,
-        isSorted: value.isSorted,
-      }));
-
-      sortingSteps.push({
-        bars: JSON.parse(
-          JSON.stringify(
-            bars.map((value) => {
-              for (let i = 0; i < result.length; i++) {
-                if (value.index === result[i].index) {
-                  return {
-                    index: value.index,
-                    barVal: result[i].barVal,
-                    isSorted: value.isSorted,
-                  };
-                }
-              }
-
-              return value;
-            })
-          )
-        ),
-        currStep: currStep++,
-      });
 
       return result;
     }
 
+    sortingSteps.push({
+      bars: mergeSort(bars),
+      currStep: 1,
+    });
     return sortingSteps;
   }
 
@@ -281,7 +260,7 @@ class Sorter extends React.Component {
       );
     } else if (sortType === "Merge Sort") {
       sortingSteps = sortingSteps.concat(
-        JSON.parse(JSON.stringify(this.doMergeSort(unsortedBarVals)))
+        JSON.parse(JSON.stringify(this.mergeSort(unsortedBarVals)))
       );
     }
 
