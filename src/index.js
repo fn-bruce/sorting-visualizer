@@ -12,17 +12,8 @@ const SORTED_COLOR = "#9b00b8"; // Purple
 function Bar(props) {
   let style = {
     height: props.value * 10 + "px",
-    backgroundColor: DEFAULT_COLOR,
+    backgroundColor: props.color,
   };
-  if (props.bar.isSorted) {
-    style.backgroundColor = SORTED_COLOR;
-  } else if (props.highlightBar === true) {
-    style.backgroundColor = HIGHLIGHT_COLOR;
-    if (props.isSwap) {
-      style.backgroundColor = SWAP_COLOR;
-    }
-  }
-
   return (
     <li>
       <div>{props.value}</div>
@@ -46,7 +37,6 @@ class Sorter extends React.Component {
       barLength: barsLength,
       resultBarVals: null,
       stepIndex: 0,
-      isSwap: false,
       doSort: false,
     };
   }
@@ -71,7 +61,6 @@ class Sorter extends React.Component {
     this.setState({
       stepIndex: stepIndex,
       resultBarVals: currBars.bars,
-      isSwap: currBars.isSwap,
       doSort: stepIndex === numSortingSteps - 1 ? false : true,
     });
   }
@@ -80,14 +69,18 @@ class Sorter extends React.Component {
     let sortingSteps = [];
     let isSwap = false;
     let currStep = 1;
-    const getHighlightedBars = (bars, index1, index2) => {
+    const getHighlightedBars = (bars, index1, index2, isSwap) => {
       return JSON.parse(
         JSON.stringify(
           bars.map((bar, index) => {
             if (index === index1 || index === index2) {
-              bar.isHighlighted = true;
-            } else {
-              bar.isHighlighted = false;
+              if (isSwap) {
+                bar.color = SWAP_COLOR;
+              } else {
+                bar.color = HIGHLIGHT_COLOR;
+              }
+            } else if (bar.color !== SORTED_COLOR) {
+              bar.color = DEFAULT_COLOR;
             }
             return bar;
           })
@@ -99,7 +92,7 @@ class Sorter extends React.Component {
         JSON.stringify(
           bars.map((value, index) => {
             if (index === index1 || index === index2) {
-              value.isSorted = true;
+              value.color = SORTED_COLOR;
             }
             return value;
           })
@@ -111,19 +104,28 @@ class Sorter extends React.Component {
       for (let j = 0; j < bars.length - i; j++) {
         isSwap = false;
         if (j === bars.length - 1 - i) {
-          bars[j].isSorted = true;
-          sortingSteps.push({
-            bars: getHighlightedBars(bars, j, j + 1),
-            isSwap: isSwap,
-            currStep: currStep++,
+          bars = bars.map((bar, index) => {
+            if (index < j) {
+              bar.color = DEFAULT_COLOR;
+            } else {
+              bar.color = SORTED_COLOR;
+            }
+            return bar;
           });
+          sortingSteps.push(
+            JSON.parse(
+              JSON.stringify({
+                bars: bars,
+                currStep: currStep++,
+              })
+            )
+          );
           break;
         }
 
         if (bars[j].barVal > bars[j + 1].barVal) {
           sortingSteps.push({
-            bars: getHighlightedBars(bars, j, j + 1),
-            isSwap: isSwap,
+            bars: getHighlightedBars(bars, j, j + 1, isSwap),
             currStep: currStep++,
           });
           let temp = bars[j];
@@ -132,8 +134,7 @@ class Sorter extends React.Component {
           isSwap = true;
         }
         sortingSteps.push({
-          bars: getHighlightedBars(bars, j, j + 1),
-          isSwap: isSwap,
+          bars: getHighlightedBars(bars, j, j + 1, isSwap),
           currStep: currStep++,
         });
       }
@@ -141,7 +142,6 @@ class Sorter extends React.Component {
 
     sortingSteps.push({
       bars: getSortedBars(bars, 0, 1),
-      isSwap: false,
       currStep: currStep++,
     });
     this.doSortingAnimation(sortingSteps, currStep);
@@ -203,11 +203,10 @@ class Sorter extends React.Component {
         JSON.stringify(
           sortingSteps[sortingSteps.length - 1].bars.map((bar) => ({
             barVal: bar.barVal,
-            isSorted: false,
+            color: DEFAULT_COLOR,
           }))
         )
       ),
-      isSwap: false,
       currStep: currStep++,
     });
 
@@ -216,20 +215,18 @@ class Sorter extends React.Component {
         bars: JSON.parse(
           JSON.stringify(
             sortingSteps[sortingSteps.length - 1].bars.map((bar, index) => {
-              let isSorted = false;
+              let color = DEFAULT_COLOR;
 
               if (index <= i) {
-                isSorted = true;
+                color = SORTED_COLOR;
               }
-
               return {
                 barVal: bar.barVal,
-                isSorted: isSorted,
+                color: color,
               };
             })
           )
         ),
-        isSwap: false,
         currStep: currStep++,
       });
     }
@@ -244,7 +241,6 @@ class Sorter extends React.Component {
           }))
         )
       ),
-      isSwap: false,
       currStep: currStep++,
     });
   }
@@ -272,7 +268,6 @@ class Sorter extends React.Component {
 
   render() {
     let resultBarVals = this.state.resultBarVals;
-    let isSwap = this.state.isSwap;
     if (!resultBarVals) {
       resultBarVals = this.state.sortingSteps[0].bars;
     }
@@ -282,8 +277,7 @@ class Sorter extends React.Component {
           key={"bar" + index}
           bar={bar}
           value={bar.barVal}
-          highlightBar={bar.isHighlighted}
-          isSwap={isSwap}
+          color={bar.color}
         />
       );
     });
@@ -301,7 +295,6 @@ class Sorter extends React.Component {
               ],
               resultBarVals: null,
               stepIndex: 0,
-              isSwap: false,
             })
           }
           onRevert={() =>
@@ -309,7 +302,6 @@ class Sorter extends React.Component {
               sortingSteps: this.state.sortingSteps.slice(0, 1),
               resultBarVals: null,
               stepIndex: 0,
-              isSwap: false,
               doSort: false,
             })
           }
@@ -375,5 +367,6 @@ function getRandomNums(length) {
     barVal: Math.floor(Math.random() * 15) + 1,
     isSorted: false,
     isHighlighted: false,
+    color: DEFAULT_COLOR,
   }));
 }
