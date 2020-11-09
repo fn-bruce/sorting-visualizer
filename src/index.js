@@ -54,24 +54,20 @@ class Sorter extends React.Component {
     const time = 100;
     this.animateSortID = setInterval(() => {
       if (this.state.doSort) {
-        this.nextStep();
+        const stepIndex = this.state.stepIndex + 1;
+        const currBars = this.state.sortingSteps[stepIndex];
+        const numSortingSteps = this.state.sortingSteps.length;
+        this.setState({
+          stepIndex: stepIndex,
+          resultBarVals: currBars.bars,
+          doSort: stepIndex === numSortingSteps - 1 ? false : true,
+        });
       }
     }, time);
   }
 
-  componentWillMount() {
+  componentWillUnmountMount() {
     clearInterval(this.animateSortID);
-  }
-
-  nextStep() {
-    const stepIndex = this.state.stepIndex + 1;
-    const currBars = this.state.sortingSteps[stepIndex];
-    const numSortingSteps = this.state.sortingSteps.length;
-    this.setState({
-      stepIndex: stepIndex,
-      resultBarVals: currBars.bars,
-      doSort: stepIndex === numSortingSteps - 1 ? false : true,
-    });
   }
 
   bubbleSort(bars) {
@@ -174,28 +170,19 @@ class Sorter extends React.Component {
     }
 
     function merge(bars1, bars2) {
-      let result = [];
-      while (bars1.length > 0 && bars2.length > 0) {
-        if (bars1[0].barVal > bars2[0].barVal) {
-          result.push(bars2[0]);
-          bars2.shift();
-        } else {
-          result.push(bars1[0]);
-          bars1.shift();
+      let bars = JSON.parse(JSON.stringify(bars1.concat(bars2)));
+
+      // Bubble Sort
+      for (let i = 0; i < bars.length - 1; i++) {
+        for (let j = 0; j < bars.length - i - 1; j++) {
+          if (bars[j].barVal > bars[j + 1].barVal) {
+            let temp = JSON.parse(JSON.stringify(bars[j]));
+            bars[j] = bars[j + 1];
+            bars[j + 1] = temp;
+          }
         }
       }
-
-      while (bars1.length > 0) {
-        result.push(bars1[0]);
-        bars1.shift();
-      }
-
-      while (bars2.length > 0) {
-        result.push(bars2[0]);
-        bars2.shift();
-      }
-
-      return result;
+      return bars;
     }
 
     sortingSteps.push({
