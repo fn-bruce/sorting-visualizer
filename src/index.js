@@ -51,7 +51,7 @@ class Sorter extends React.Component {
   }
 
   componentDidMount() {
-    const time = 100;
+    const time = 300;
     this.animateSortID = setInterval(() => {
       if (this.state.doSort) {
         const stepIndex = this.state.stepIndex + 1;
@@ -154,7 +154,26 @@ class Sorter extends React.Component {
   }
 
   mergeSort(bars) {
+    let defaultBars = JSON.parse(JSON.stringify(bars));
     let sortingSteps = [];
+    let currStep = 0;
+    const insertStep = (currBar) => {
+      sortingSteps.push({
+        bars: JSON.parse(
+          JSON.stringify(
+            defaultBars.map((bar) => {
+              if (bar.id === currBar.id) {
+                bar.color = HIGHLIGHT_COLOR;
+              } else {
+                bar.color = DEFAULT_COLOR;
+              }
+              return bar;
+            })
+          )
+        ),
+        currStep: currStep++,
+      });
+    };
     function mergeSort(bars) {
       if (bars.length === 1) {
         return bars;
@@ -170,25 +189,109 @@ class Sorter extends React.Component {
     }
 
     function merge(bars1, bars2) {
-      let bars = JSON.parse(JSON.stringify(bars1.concat(bars2)));
-
-      // Bubble Sort
-      for (let i = 0; i < bars.length - 1; i++) {
-        for (let j = 0; j < bars.length - i - 1; j++) {
-          if (bars[j].barVal > bars[j + 1].barVal) {
-            let temp = JSON.parse(JSON.stringify(bars[j]));
-            bars[j] = bars[j + 1];
-            bars[j + 1] = temp;
+      const originalBars = JSON.parse(JSON.stringify(bars1.concat(bars2)));
+      let barIndexs = [];
+      for (let i = 0; i < defaultBars.length; i++) {
+        for (let j = 0; j < originalBars.length; j++) {
+          if (defaultBars[i].id === originalBars[j].id) {
+            barIndexs.push(i);
           }
         }
       }
+
+      let bars = [];
+      while (bars1.length > 0 && bars2.length > 0) {
+        if (bars1[0].barVal > bars2[0].barVal) {
+          bars.push(bars2[0]);
+          insertStep(bars2[0]);
+          bars2.shift();
+        } else {
+          bars.push(bars1[0]);
+          insertStep(bars1[0]);
+          bars1.shift();
+        }
+      }
+
+      while (bars1.length > 0) {
+        bars.push(bars1[0]);
+        insertStep(bars1[0]);
+        bars1.shift();
+      }
+
+      while (bars2.length > 0) {
+        bars.push(bars2[0]);
+        insertStep(bars2[0]);
+        bars2.shift();
+      }
+
+      for (let i = 0; i < barIndexs.length; i++) {
+        defaultBars[barIndexs[i]] = JSON.parse(JSON.stringify(bars[i]));
+      }
+      sortingSteps.push({
+        bars: JSON.parse(
+          JSON.stringify(
+            defaultBars.map((bar) => {
+              bar.color = DEFAULT_COLOR;
+              return bar;
+            })
+          )
+        ),
+        currStep: currStep++,
+      });
+
+      const defaultColorBars = JSON.parse(
+        JSON.stringify(
+          sortingSteps[sortingSteps.length - 1].bars.map((bar) => ({
+            barVal: bar.barVal,
+            color: DEFAULT_COLOR,
+          }))
+        )
+      );
+
+      // Reset all bars to default color
+      sortingSteps.push({
+        bars: defaultColorBars,
+        currStep: currStep++,
+      });
+
+      sortingSteps.push({
+        bars: JSON.parse(
+          JSON.stringify(
+            sortingSteps[sortingSteps.length - 1].bars.map((bar, index) => {
+              let color = DEFAULT_COLOR;
+
+              if (
+                barIndexs[0] <= index &&
+                index <= barIndexs[barIndexs.length - 1]
+              ) {
+                color = SORTED_COLOR;
+              }
+              return {
+                barVal: bar.barVal,
+                color: color,
+              };
+            })
+          )
+        ),
+        currStep: currStep++,
+      });
+
+      // Reset all bars to default color
+      sortingSteps.push({
+        bars: defaultColorBars,
+        currStep: currStep++,
+      });
+
       return bars;
     }
 
     sortingSteps.push({
       bars: mergeSort(bars),
-      currStep: 1,
+      currStep: currStep++,
     });
+
+    this.doSortingAnimation(sortingSteps, currStep);
+
     return sortingSteps;
   }
 
@@ -345,7 +448,7 @@ ReactDOM.render(<Sorter />, document.getElementById("root"));
 
 function getRandomNums(length) {
   return [...Array(length)].map((_, index) => ({
-    index: index,
+    id: index,
     barVal: Math.floor(Math.random() * 15) + 1,
     color: DEFAULT_COLOR,
   }));
